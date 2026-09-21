@@ -10,13 +10,18 @@ See `docs/problem_statement.md` for the full write-up.
 
 ## Module in scope (Week 1)
 
-- [ ] TBD — see Day 1 checklist (Purchase Orders is the leading candidate)
+- [x] **Purchase Orders** — rich vendor/date/amount fields, natural anomaly angle
+      (unusual amounts, delayed approvals). Locked Day 1; see
+      `docs/problem_statement.md` for the full rationale.
 
 ## Architecture
 
 ```
-data layer (CSV → SQLite)  →  query layer (text-to-SQL)  →  LLM layer (Claude API)  →  answer
+data layer (CSV → SQLite)  →  retrieval layer (text-to-SQL)  →  LLM layer (Groq / Gemini)  →  answer
 ```
+
+LLM provider is swappable via `LLM_PROVIDER` (`groq` default, `gemini` fallback) —
+see `docs/problem_statement.md` for the full tech-stack rationale.
 
 See `docs/architecture.md` once Day 4 is done.
 
@@ -31,7 +36,7 @@ sap-copilot/
 ├── src/
 │   ├── data_layer/        # load CSVs into a queryable form (pandas / SQLite)
 │   ├── retrieval/         # text-to-SQL / query generation
-│   └── llm/                # Claude API calls, prompt templates
+│   └── llm/                # Groq/Gemini calls, prompt templates
 ├── tests/
 ├── requirements.txt
 └── README.md
@@ -45,10 +50,12 @@ source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Set your Anthropic API key:
+Set your LLM provider and API key (Groq by default, free tier at console.groq.com):
 
 ```bash
-export ANTHROPIC_API_KEY=your_key_here   # Windows: set ANTHROPIC_API_KEY=your_key_here
+export LLM_PROVIDER=groq                # or: gemini
+export GROQ_API_KEY=your_key_here       # Windows: set GROQ_API_KEY=your_key_here
+# export GEMINI_API_KEY=your_key_here   # only needed if LLM_PROVIDER=gemini
 ```
 
 ## Running
