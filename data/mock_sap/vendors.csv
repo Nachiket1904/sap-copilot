@@ -1,0 +1,31 @@
+vendor_id,vendor_name,vendor_category,country,contact_email,payment_terms_days
+V001,Apex Steel Works,MRO,India,apex.steel.works@example.com,15
+V002,Bluewave Logistics,MRO,USA,bluewave.logistics@example.com,30
+V003,Cedar Point Supplies,IT Hardware,India,cedar.point.supplies@example.com,60
+V004,Delta Industrial Components,Raw Materials,India,delta.industrial.components@example.com,45
+V005,Evergreen Packaging Co,Packaging,India,evergreen.packaging.co@example.com,15
+V006,Falcon Electronics,Raw Materials,Germany,falcon.electronics@example.com,30
+V007,Granite Office Solutions,Services,India,granite.office.solutions@example.com,45
+V008,Horizon Raw Materials,IT Hardware,UAE,horizon.raw.materials@example.com,30
+V009,Ironclad Fasteners,Packaging,USA,ironclad.fasteners@example.com,15
+V010,Junction Freight Services,Logistics,India,junction.freight.services@example.com,60
+V011,Keystone Manufacturing,Packaging,China,keystone.manufacturing@example.com,30
+V012,Lakeside Chemicals,IT Hardware,Germany,lakeside.chemicals@example.com,30
+V013,Meridian IT Hardware,Raw Materials,India,meridian.it.hardware@example.com,30
+V014,Northgate Stationery,Raw Materials,China,northgate.stationery@example.com,30
+V015,Orion Safety Equipment,Services,USA,orion.safety.equipment@example.com,15
+V016,Pinnacle MRO Supply,MRO,Singapore,pinnacle.mro.supply@example.com,45
+V017,Quantum Circuit Traders,Raw Materials,UAE,quantum.circuit.traders@example.com,15
+V018,Redwood Facilities Mgmt,Services,USA,redwood.facilities.mgmt@example.com,60
+V019,Summit Consulting Services,Services,China,summit.consulting.services@example.com,45
+V020,Titan Machine Parts,IT Hardware,India,titan.machine.parts@example.com,15
+V021,Unity Print & Signage,MRO,Germany,unity.print.and.signage@example.com,30
+V022,Vertex Software Solutions,Raw Materials,Germany,vertex.software.solutions@example.com,15
+V023,Westbrook Textiles,Packaging,USA,westbrook.textiles@example.com,30
+V024,Yellowline Transport,MRO,China,yellowline.transport@example.com,30
+V025,Zenith Energy Systems,Office Supplies,China,zenith.energy.systems@example.com,30
+V026,Ashford Packaging,MRO,USA,ashford.packaging@example.com,60
+V027,Brightline Electricals,MRO,India,brightline.electricals@example.com,45
+V028,Coastal Tools & Equipment,MRO,India,coastal.tools.and.equipment@example.com,45
+V029,Dockyard Marine Supplies,MRO,Germany,dockyard.marine.supplies@example.com,30
+V030,Elmwood Furniture Co,Packaging,UAE,elmwood.furniture.co@example.com,30
