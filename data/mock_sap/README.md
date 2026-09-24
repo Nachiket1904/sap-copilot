@@ -59,7 +59,7 @@ question 1 and 4 both need.
 | # | Seed question | Answerable with this schema? |
 |---|---|---|
 | 1 | Delayed payments this month | Yes — `payments.payment_date`, `payments.due_date`, join to `vendors.vendor_name` via `payments.vendor_id` |
-| 2 | Q3 POs by category | Yes — `purchase_orders.po_date`, `.category`, `.amount` (note: 2 rows have blank category, will need a `WHERE category != ''` or an "Uncategorized" bucket) |
+| 2 | Q3 POs by category | Yes — `purchase_orders.po_date`, `.category`, `.amount` (note: 2 rows have blank category, will need a `WHERE category != ''` or an "Uncategorized" bucket) **Blank cells load as `NULL` in SQLite**, not empty strings. Filter with `IS NULL` / `IS NOT NULL`. `tests/test_seed_questions.py` checks this.|
 | 3 | Unusual transactions this week | Yes for data support (amount outliers + duplicates are seeded) — but the "unusual" **rule itself is not yet defined** (threshold vs. duplicate detection); still an open decision, not a schema gap |
 | 4 | Avg payment delay by vendor | Yes — same fields as Q1, aggregated by `vendor_id` |
 | 5 | Pending POs above ₹1,00,000 | Yes — `purchase_orders.status = 'Pending'`, `.amount > 100000` |

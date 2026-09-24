@@ -18,7 +18,10 @@ from datetime import date, timedelta
 
 random.seed(42)  # reproducible dataset
 
-OUT_DIR = "/home/data/mock_sap"
+# OUT_DIR = "/home/data/mock_sap"
+from pathlib import Path
+OUT_DIR = Path(__file__).resolve().parent / "data" / "mock_sap"
+
 
 # ---------------------------------------------------------------------------
 # Vendors
