@@ -23,7 +23,7 @@ data layer (CSV → SQLite)  →  retrieval layer (text-to-SQL)  →  LLM layer 
 LLM provider is swappable via `LLM_PROVIDER` (`groq` default, `gemini` fallback) —
 see `docs/problem_statement.md` for the full tech-stack rationale.
 
-See `docs/architecture.md` once Day 4 is done.
+Full diagram and design decisions: [docs/architecture.md](docs/architecture.md).
 
 ## Project structure
 

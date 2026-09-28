@@ -13,7 +13,7 @@ dig through a fixed set of SAP transactions (ME2M, ME23N, etc.) themselves.
 Plain-English questions over Purchase Order data, e.g.:
 
 - "Which vendors had delayed payments this month?"
-- "Show me all POs over $50,000 approved in the last quarter."
+- "Show me all POs over ₹50,000 approved in the last quarter."
 - "Are there any duplicate or unusually large POs for [vendor]?"
 
 See `docs/seed_questions.md` for the full list of 5 seed questions the demo
