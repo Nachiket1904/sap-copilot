@@ -1,7 +1,8 @@
-# Week 1 Progress — Days 1–3 Recap + Day 4 Guide
+# Week 1 Progress — Full Recap (Days 1–5)
 
-Status as of 23 Sept 2026. Covers what's done, what we learned, and what
-Day 4 actually involves.
+Status as of 29 Sept 2026. Week 1 (Foundation & Alignment) is complete.
+Covers what's done, what we learned each day, and what Week 2 (Core Build)
+starts with.
 
 ---
 
@@ -11,8 +12,9 @@ Day 4 actually involves.
 |---|---|---|---|
 | 1 (Mon) | Foundation | ✅ Done | `docs/problem_statement.md`, module recorded in `README.md` |
 | 2 (Tue) | Walkthroughs & seed questions | ✅ Done | `docs/seed_questions.md`, walkthrough notes in `work.md` |
-| 3 (Wed) | Mock dataset & schema | ✅ Done | 3 CSVs + `data/mock_sap/README.md` + `generate_mock_data.py` |
-| 4 (Thu) | Architecture & stack | ⏳ Next | needs `docs/architecture.md` (+ confirm `requirements.txt`) |
+| 3 (Wed) | Mock dataset & schema | ✅ Done | 3 CSVs + `data/mock_sap/README.md` + `generate_mock_data.py` + `tests/test_seed_questions.py` |
+| 4 (Thu) | Architecture & stack | ✅ Done | `docs/architecture.md` (pipeline, decisions, SAP sanity check), `requirements.txt` verified |
+| 5 (Fri) | Repo finalized | ✅ Done | `.env.example`, updated `.gitignore`, `README.md` complete |
 
 ---
 
@@ -198,8 +200,105 @@ Questions for her to answer against the schema:
   actually work (SAP often keys terms off the invoice/baseline date)?
 
 ### Day 4 deliverables checklist
-- [ ] `docs/architecture.md`: diagram + text-to-SQL decision + Q3 rule
+- [x] `docs/architecture.md`: diagram + text-to-SQL decision + Q3 rule
       + "Groq/Gemini, not Claude" note
-- [ ] `requirements.txt` confirmed to install cleanly (test passes)
-- [ ] Her SAP sanity-check notes added (to `architecture.md` or the PR)
-- [ ] Update the `README.md` "See docs/architecture.md once Day 4 is done" line
+- [x] `requirements.txt` confirmed to install cleanly (test passes)
+- [x] Her SAP sanity-check notes added (in `architecture.md`)
+- [x] Update the `README.md` "See docs/architecture.md once Day 4 is done" line
+
+**What came back from the SAP sanity check:** joins hold up cleanly (0
+orphan keys, no fan-out), flattening EKKO/EKPO is fine until we need
+material-level questions, the status labels map onto real SAP concepts
+(release strategy, delivery/invoice flags, BSAK/BSIK) well enough for a
+business-language tool, and `due_date` as delivery-date-based is an
+acceptable stand-in with no invoice table yet. One real finding: 36
+`Pending` POs have a past `delivery_date` — fine as long as the field is
+read as *scheduled*, not *actual*, delivery (now a documented prompt rule).
+
+---
+
+## Day 5 — Repo Finalized ✅
+
+**Done**
+- `.env.example` added (`LLM_PROVIDER`, `GROQ_API_KEY`, commented
+  `GEMINI_API_KEY`) so a fresh clone knows which keys it needs without
+  reading the code.
+- `.gitignore` extended: `.pytest_cache/` and the personal planning file
+  (`DAY3-5_PLAN.md`) excluded from commits.
+- `README.md` rewritten: Windows-first setup commands, a "Running (Week 1)"
+  section that lists only commands that actually work today (tests, loader,
+  generator, LLM smoke test — no `python -m src.app` yet), and the status
+  line updated to reflect Week 1 as complete.
+- Full suite verified green: `python -m pytest -q` → **8 passed**.
+
+**Still open (needs the two of you, not just the repo)**
+- Fresh-clone test on a second machine/folder to prove "clone and run"
+  actually holds, not just "works on my machine".
+- Her final pass on the mock data + problem statement for consistency.
+- The Week 1 review call itself — walk the checklist, agree what's fuzzy,
+  confirm the Week 2 split below.
+
+**Learnings**
+- A repo "being done" and a repo being *provably* done are different
+  things — the seed-question tests (Day 3) and the fresh-clone step (Day 5)
+  exist specifically to convert claims ("this works") into checks that fail
+  loudly if they stop being true.
+- Small inconsistencies compound: the Claude→Groq/Gemini mismatch, the
+  `$`→`₹` typo, and the `!= ''`→`IS NULL` bug were all caught because each
+  day's task included proving the previous day's work, not just adding to it.
+
+---
+
+## Week 1 — the whole story, in short
+
+We picked Purchase Orders as the module (richest anomaly surface: vendor,
+amount, dates, status), agreed the shape of the problem is text-to-SQL over
+structured tables rather than RAG (every seed question is a filter,
+aggregate, or join — vector search has no notion of `amount > 100000`), and
+built a fully reproducible mock dataset (222 POs / 30 vendors / 163
+payments, seed=42) with deliberately planted messiness — delayed payments,
+outlier amounts, duplicate POs, blank fields — that doubles as the Week 3
+anomaly test set today via `tests/test_seed_questions.py`.
+
+The architecture locked to two LLM calls per question (question → SQL,
+rows → answer) with a SELECT-only validator, Groq as the default provider
+(Gemini fallback) instead of the original Claude assumption, and one
+deliberate exception: the "unusual transactions" rule (Q3) is fixed SQL,
+not LLM-generated, because anomaly detection needs to be deterministic and
+explainable. The SAP sanity check confirmed the schema's joins and
+simplifications are reasonable for a prototype, while surfacing real SAP
+nuances (release-strategy statuses, baseline-date payment terms, one
+payment per PO vs partial payments) worth revisiting later.
+
+By the end of Week 1: problem statement, seed questions, mock data +
+schema, architecture, and a runnable, tested repo are all in place and
+committed. Nothing about Week 2 requires re-deciding any of this.
+
+## Week 2 goals (Core Build)
+
+Target: a working end-to-end question → answer flow for the 5 seed
+questions, split so both halves land independently and meet in the middle
+on Day 3.
+
+- **Day 1** — Her: build/clean the data layer into a queryable form (verify
+  `load_to_sqlite()` handles the real dataset cleanly). You: a basic LLM
+  call + prompt template for Q&A using `src/llm/client.py`.
+- **Day 2** — Her: add 2–3 more data scenarios (the Sept delays flagged in
+  Day 5, plus any other edge cases). You: wire the LLM to real query
+  capability — `ask_question(q)` in `src/retrieval/text_to_sql.py` (prompt →
+  SQL → SELECT-only validate → run → rows).
+- **Day 3** — Integrate both halves into one end-to-end flow; test against
+  all 5 seed questions, ideally against a "golden answers" file (expected
+  SQL result per question) so wrong answers are caught automatically, not
+  eyeballed.
+- **Day 4** — Debug integration issues together (on call); fix
+  wrong/broken answers.
+- **Day 5** — Demo v0.1 to each other, list the top 5 things broken or
+  missing, Week 2 review.
+
+**Carried over from Week 1 (bring these into Week 2 decisions):**
+- Pin "today's date" for demos (data ends 2026-09-20) or use the real date?
+- One payment per PO is fine for now — model partial payments later if
+  anomaly questions need it.
+- `google-generativeai` deprecation — migrate to `google-genai` now or only
+  if Gemini actually gets used as the fallback.

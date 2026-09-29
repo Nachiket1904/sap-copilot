@@ -44,27 +44,27 @@ sap-copilot/
 
 ## Setup
 
+Requires Python 3.11+.
+
 ```bash
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+venv\Scripts\activate          # macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
+copy .env.example .env         # macOS/Linux: cp .env.example .env  — then add your key
 ```
 
-Set your LLM provider and API key (Groq by default, free tier at console.groq.com):
+Free Groq API key at console.groq.com.
+
+## Running (Week 1)
 
 ```bash
-export LLM_PROVIDER=groq                # or: gemini
-export GROQ_API_KEY=your_key_here       # Windows: set GROQ_API_KEY=your_key_here
-# export GEMINI_API_KEY=your_key_here   # only needed if LLM_PROVIDER=gemini
+python -m pytest -v                 # data + seed-question checks
+python -m src.data_layer.loader     # load CSVs into SQLite
+python generate_mock_data.py        # regenerate the mock dataset (deterministic)
+python -m src.llm.client            # LLM smoke test (needs GROQ_API_KEY)
 ```
 
-## Running
-
-```bash
-python -m src.app
-```
-
-(Wire this up once the Week 2 end-to-end flow exists.)
+The end-to-end `python -m src.app` entry point arrives in Week 2.
 
 ## Collaborators
 
@@ -73,6 +73,4 @@ python -m src.app
 
 ## Status
 
-🚧 Week 1 — Foundation & Alignment. See the project plan doc for the day-by-day breakdown.
-# sap-copilot
-# sap-copilot
+✅ Week 1 complete: problem, data, schema, architecture locked. Next: Week 2 core build (data layer + first LLM call).

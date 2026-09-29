@@ -19,3 +19,9 @@ venv/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Test cache
+.pytest_cache/
+
+# Personal notes
+DAY3-5_PLAN.md
