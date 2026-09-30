@@ -55,16 +55,20 @@ copy .env.example .env         # macOS/Linux: cp .env.example .env  — then add
 
 Free Groq API key at console.groq.com.
 
-## Running (Week 1)
+## Running
 
 ```bash
 python -m pytest -v                 # data + seed-question checks
-python -m src.data_layer.loader     # load CSVs into SQLite
+python -m src.data_layer.loader     # load CSVs into SQLite + data-quality checks
 python generate_mock_data.py        # regenerate the mock dataset (deterministic)
 python -m src.llm.client            # LLM smoke test (needs GROQ_API_KEY)
+
+# Week 2 (need GROQ_API_KEY in .env):
+python -m src.retrieval.text_to_sql --manual "Which vendors had delayed payments this month?"   # Day 1: schema + question -> plain-English plan
+python -m src.retrieval.text_to_sql "Which vendors had delayed payments this month?"            # Day 2: question -> SQL -> rows -> answer
 ```
 
-The end-to-end `python -m src.app` entry point arrives in Week 2.
+Tests stub the LLM, so `pytest` needs no API key. The `python -m src.app` entry point is still to come.
 
 ## Collaborators
 

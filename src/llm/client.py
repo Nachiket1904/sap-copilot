@@ -1,7 +1,7 @@
 """Thin, provider-agnostic wrapper around the copilot's LLM layer.
 
 Provider is chosen via the LLM_PROVIDER env var:
-  - "groq"   (default) — Llama 3.x on Groq's LPU inference, fast + free tier
+  - "groq"   (default) — an open model on Groq (default openai/gpt-oss-20b), fast + free tier
   - "gemini" — Google's Gemini flash models, fallback/alternate
 
 Retrieval and data layers only ever call `ask()` — they never know which
@@ -9,7 +9,11 @@ provider is configured.
 """
 import os
 
-GROQ_MODEL = "llama-3.3-70b-versatile"
+from dotenv import load_dotenv
+
+load_dotenv()  # read GROQ_API_KEY / LLM_PROVIDER from a local .env (git-ignored)
+
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b")  # override in .env if your account lacks access
 GEMINI_MODEL = "gemini-2.0-flash"
 
 
@@ -24,7 +28,8 @@ def _ask_groq(prompt: str, system: str | None) -> str:
     if system:
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
-    response = client.chat.completions.create(model=GROQ_MODEL, messages=messages)
+    # temperature 0: the same question should produce the same SQL every run
+    response = client.chat.completions.create(model=GROQ_MODEL, messages=messages, temperature=0)
     return response.choices[0].message.content
 
 

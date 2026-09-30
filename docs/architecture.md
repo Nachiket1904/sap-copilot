@@ -62,7 +62,7 @@ On current mock data this flags exactly the seeded cases: 3 outliers
 |---|---|---|
 | Language | Python 3.11+ (tested on 3.14) | team default |
 | Data | pandas → SQLite (in-memory) | zero setup, real SQL, small data |
-| LLM | Groq `llama-3.3-70b-versatile` default, Gemini flash fallback, via `LLM_PROVIDER` | free tier; locked Day 1. **Not Claude/Anthropic**, despite the original plan text |
+| LLM | Groq `openai/gpt-oss-20b` default (Llama models were retired from the Groq account; override with `GROQ_MODEL`), Gemini flash fallback, via `LLM_PROVIDER` | free tier; locked Day 1. **Not Claude/Anthropic**, despite the original plan text |
 | Framework | **None** (no LangChain) | 2 plain API calls per question; a framework only adds layers to debug |
 | Tests | pytest | — |
 
