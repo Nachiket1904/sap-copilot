@@ -142,18 +142,23 @@ def format_rows(columns: list[str], rows: list[tuple]) -> str:
     return "\n".join(lines)
 
 
-def answer_question(question: str, conn, today: str | None = None, verbose: bool = False) -> str:
-    """Full pipeline: plain-English question in, plain-English answer out (2 LLM calls)."""
-    sql = generate_sql(question, conn, today)
-    columns, rows = run_select(conn, sql)
-    if verbose:
-        print(f"SQL:\n{sql}\n\nRows returned: {len(rows)}\n")
+def phrase_answer(question: str, sql: str, columns: list[str], rows: list[tuple]) -> str:
+    """LLM call #2: turn query rows into a plain-English answer."""
     prompt = (
         f"Question: {question}\n\nSQL that was run:\n{sql}\n\n"
         f"Query results ({len(rows)} rows):\n{format_rows(columns, rows)}\n\n"
         "Answer the question in plain English."
     )
     return ask(prompt, system=ANSWER_SYSTEM)
+
+
+def answer_question(question: str, conn, today: str | None = None, verbose: bool = False) -> str:
+    """Full pipeline: plain-English question in, plain-English answer out (2 LLM calls)."""
+    sql = generate_sql(question, conn, today)
+    columns, rows = run_select(conn, sql)
+    if verbose:
+        print(f"SQL:\n{sql}\n\nRows returned: {len(rows)}\n")
+    return phrase_answer(question, sql, columns, rows)
 
 
 if __name__ == "__main__":
