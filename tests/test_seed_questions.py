@@ -32,7 +32,7 @@ def test_q1_delayed_payments(conn):
         FROM payments p JOIN vendors v ON v.vendor_id = p.vendor_id
         WHERE p.payment_date > p.due_date
     """).fetchall()
-    assert len(rows) == 12  # seeded delay cases
+    assert len(rows) == 16  # 12 random delays + 4 repeat-late scenario rows (V019)
     assert all(r[2] > 0 for r in rows)
 
 

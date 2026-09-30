@@ -10,6 +10,8 @@ Deliberately includes:
   - 1-2 missing/null fields (missing delivery_date, missing category)
   - a couple of duplicate-looking POs (same vendor+amount+date) for
     anomaly-detection test cases in Week 3
+  - Week 2 scenarios (see below): a repeat-late vendor, a near-duplicate PO,
+    and a payment with a malformed amount
 """
 
 import csv
@@ -207,6 +209,77 @@ for i, po in enumerate(payable_pos, start=1):
 missing_amount_idx = random.sample(range(len(payments)), 2)
 for idx in missing_amount_idx:
     payments[idx]["amount"] = ""
+
+# ---------------------------------------------------------------------------
+# Week 2 scenarios (hand-written, no randomness, so the seeded data above is
+# unchanged). Each stresses a seed question in a way the random data doesn't.
+# ---------------------------------------------------------------------------
+
+def add_scenario_po(vendor_id, category, po_date, delivery_date, amount, status="Closed"):
+    row = {
+        "po_id": f"PO{len(purchase_orders) + 1:05d}",
+        "vendor_id": vendor_id,
+        "category": category,
+        "po_date": po_date.isoformat(),
+        "delivery_date": delivery_date.isoformat(),
+        "amount": amount,
+        "status": status,
+    }
+    purchase_orders.append(row)
+    return row
+
+
+def add_scenario_payment(po, due_date, payment_date, amount):
+    payments.append({
+        "payment_id": f"PMT{len(payments) + 1:05d}",
+        "po_id": po["po_id"],
+        "vendor_id": po["vendor_id"],
+        "due_date": due_date.isoformat(),
+        "payment_date": payment_date.isoformat(),
+        "amount": amount,
+        "status": "Paid",
+    })
+
+
+vendor_by_id = {v["vendor_id"]: v for v in vendors}
+
+# Scenario A: one vendor paid late four times in a row, all paid in September.
+# Stresses Q1 ("delayed payments this month") and Q4 (average delay by vendor):
+# this vendor tops the late-payment COUNT (4 vs 1) though not the average delay,
+# and Q1 finally has several September rows.
+REPEAT_LATE_VENDOR = "V019"  # Summit Consulting Services
+terms = vendor_by_id[REPEAT_LATE_VENDOR]["payment_terms_days"]
+for due, days_late, amount in [
+    (date(2026, 8, 12), 24, 82_500.00),
+    (date(2026, 8, 16), 20, 64_000.00),
+    (date(2026, 8, 22), 15, 91_250.00),
+    (date(2026, 8, 26), 19, 58_750.00),
+]:
+    delivery = due - timedelta(days=terms)
+    po = add_scenario_po(REPEAT_LATE_VENDOR, "Services", delivery - timedelta(days=14), delivery, amount)
+    add_scenario_payment(po, due, due + timedelta(days=days_late), amount)
+
+# Scenario B: a near-duplicate PO. Same vendor and amount as an existing PO,
+# raised one day later. The Q3 anomaly rule needs the SAME date, so it does NOT
+# flag this. It documents the rule's known blind spot; a smarter rule (or the
+# LLM) should notice it.
+near_dup_source = dup_sources[0]
+add_scenario_po(
+    near_dup_source["vendor_id"], near_dup_source["category"],
+    date.fromisoformat(near_dup_source["po_date"]) + timedelta(days=1),
+    date.fromisoformat(near_dup_source["delivery_date"] or near_dup_source["po_date"]) + timedelta(days=1),
+    near_dup_source["amount"], status="Approved",
+)
+
+# Scenario C: a Paid payment whose amount is malformed text ("TBD") rather than
+# blank. A naive load turns the whole amount column into TEXT and breaks
+# SUM/AVG; the loader must coerce it to NULL and report it.
+malformed_vendor = "V005"  # Evergreen Packaging Co
+terms = vendor_by_id[malformed_vendor]["payment_terms_days"]
+due = date(2026, 9, 10)
+delivery = due - timedelta(days=terms)
+po = add_scenario_po(malformed_vendor, "Packaging", delivery - timedelta(days=14), delivery, 47_300.00)
+add_scenario_payment(po, due, date(2026, 9, 8), "TBD")
 
 # ---------------------------------------------------------------------------
 # Write CSVs

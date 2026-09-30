@@ -23,7 +23,7 @@ every `vendor_id` in `purchase_orders.csv`/`payments.csv` exists in
 | `contact_email` | string | Synthetic, `@example.com`. |
 | `payment_terms_days` | integer | Contractual payment window used to derive `payments.due_date`. One of: 15, 30, 45, 60. |
 
-## purchase_orders.csv (222 rows)
+## purchase_orders.csv (228 rows)
 
 | Column | Type | Notes |
 |---|---|---|
@@ -40,7 +40,7 @@ identical `vendor_id` + `amount` + `po_date` with an earlier PO but a
 different `po_id` — simulates an accidental double-entry, for duplicate-PO
 detection.
 
-## payments.csv (163 rows)
+## payments.csv (168 rows)
 
 | Column | Type | Notes |
 |---|---|---|
@@ -49,12 +49,24 @@ detection.
 | `vendor_id` | string | FK → `vendors.vendor_id`. Denormalized here so payment-delay questions don't require a join back through `purchase_orders`. |
 | `due_date` | date (`YYYY-MM-DD`) | `delivery_date + vendor.payment_terms_days`. This is the field `docs/seed_questions.md` flagged as needed for delay calculations. |
 | `payment_date` | date (`YYYY-MM-DD`) or blank | Actual payment date. Blank when `status = Scheduled` (not yet paid). |
-| `amount` | float | Mirrors the PO amount. **2 rows have this blank** (data-entry-gap test case). |
+| `amount` | float | Mirrors the PO amount. **2 rows have this blank**, and **1 row (PMT00168) is the text `TBD`** (data-entry-gap test cases). The loader stores both as `NULL`. |
 | `status` | string | Fixed vocabulary: `Paid`, `Scheduled`. |
 
-**Delay test cases:** 12 payments are deliberately delayed 5–35 days past
+**Delay test cases:** 12 random payments (plus 4 from Scenario A below) are deliberately delayed 5–35 days past
 `due_date` — `payment_date - due_date` is the delay calculation seed
 question 1 and 4 both need.
+
+## Week 2 scenarios
+
+Appended by hand-written (non-random) code at the end of `generate_mock_data.py`,
+so the original seeded rows are unchanged. Each stresses a seed question in a way
+the random data doesn't.
+
+| Scenario | Rows | What it tests |
+|---|---|---|
+| **A. Repeat-late vendor** | V019 Summit Consulting Services: PO00223–PO00226 / PMT00164–PMT00167, each paid 15–24 days late, all paid in Sep 2026 | **Q1** finally returns several September rows (previously 1). **Q4**: Summit has 4 late payments vs 1 for every other vendor (highest *count*), while its average delay (19.5 days) is not the highest, so "worst vendor" depends on whether count or average is meant. |
+| **B. Near-duplicate PO** | PO00227: same vendor (V014) and amount as an existing PO, raised **one day later** | **Q3**. The rule in `docs/architecture.md` needs the *same* `po_date`, so it does **not** flag this. It documents the rule's blind spot, and `tests/test_seed_questions.py` still expects exactly 2 duplicates. |
+| **C. Malformed amount** | PMT00168 (PO00228, V005): `amount` is the text `TBD`, not blank | Loader robustness. A naive load makes the whole `amount` column TEXT, which breaks `SUM`/`AVG`. The loader coerces it to `NULL` and prints a warning. `tests/test_loader.py` checks it. |
 
 ## Query-ability check against seed questions
 
