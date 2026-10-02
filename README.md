@@ -68,7 +68,7 @@ python -m src.retrieval.text_to_sql --manual "Which vendors had delayed payments
 python -m src.retrieval.text_to_sql "Which vendors had delayed payments this month?"            # Day 2: question -> SQL -> rows -> answer
 ```
 
-Tests stub the LLM, so `pytest` needs no API key. The `python -m src.app` entry point is still to come.
+Tests stub the LLM, so `pytest` needs no API key. Run the copilot with `python -m src.app "your question"`, or `--seed` for the 5 seed questions.
 
 ## Collaborators
 

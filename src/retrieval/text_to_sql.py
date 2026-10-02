@@ -28,7 +28,17 @@ SQL_RULES = """\
   "Average payment delay" averages delay days over delayed payments only (payment_date > due_date), per vendor.
 - delivery_date is the scheduled delivery date, not proof the goods arrived.
 - payments.vendor_id exists, so payments can join vendors directly.
-- Output exactly ONE SQLite SELECT statement and nothing else. No explanation, no markdown."""
+- Do every calculation (COUNT, SUM, AVG, differences) inside the SQL; never leave arithmetic for later. ROUND money/averages to 2 decimals.
+- When grouping by purchase_orders.category use COALESCE(category, 'Uncategorized') so missing categories are labelled.
+- Select only the columns the question asks for (plus the vendor name next to any vendor id). Do not invent extra metrics.
+- Output exactly ONE SQLite SELECT statement and nothing else. No explanation, no markdown.
+
+Worked examples (follow the same style):
+Q: How many Approved purchase orders does each vendor have?
+SELECT v.vendor_name, COUNT(*) AS po_count FROM purchase_orders po JOIN vendors v ON v.vendor_id = po.vendor_id WHERE po.status = 'Approved' GROUP BY v.vendor_name ORDER BY po_count DESC
+
+Q: Total paid amount per vendor in August 2026?
+SELECT v.vendor_name, ROUND(SUM(p.amount), 2) AS total_paid FROM payments p JOIN vendors v ON v.vendor_id = p.vendor_id WHERE p.status = 'Paid' AND p.payment_date BETWEEN '2026-08-01' AND '2026-08-31' GROUP BY v.vendor_name"""
 
 SQL_SYSTEM = "You are a careful SQLite analyst for a purchase-order database. You only write read-only SQL."
 
@@ -36,7 +46,9 @@ ANSWER_SYSTEM = (
     "You are an analyst answering a finance user's question about purchase orders. "
     "Use only the query results provided; never invent numbers. Be concise and name "
     "vendors, PO numbers, amounts (in INR) and delays where relevant. If a result is "
-    "empty, say nothing matched. If amounts are missing (NULL), mention it."
+    "empty, say nothing matched. If amounts are missing (NULL), mention it. Copy numbers "
+    "exactly as they appear in the results; do not recompute, average or derive new figures, "
+    "and do not add columns or metrics that are not in the results."
 )
 
 
@@ -126,10 +138,21 @@ def run_select(conn: sqlite3.Connection, sql: str) -> tuple[list[str], list[tupl
         conn.execute("PRAGMA query_only = OFF")
 
 
-def generate_sql(question: str, conn, today: str | None = None) -> str:
-    """LLM call #1: question -> validated SELECT."""
-    reply = ask(build_sql_prompt(question, conn, today), system=SQL_SYSTEM)
-    return validate_select(extract_sql(reply))
+def generate_sql(question: str, conn, today: str | None = None, retries: int = 2) -> str:
+    """LLM call #1: question -> validated SELECT.
+
+    The model occasionally returns an empty or non-SELECT reply; retry a couple of
+    times (and tell it what was wrong) before giving up.
+    """
+    prompt = build_sql_prompt(question, conn, today)
+    for attempt in range(retries + 1):
+        reply = ask(prompt, system=SQL_SYSTEM)
+        try:
+            return validate_select(extract_sql(reply))
+        except ValueError as exc:
+            if attempt == retries:
+                raise
+            prompt += f"\n\nYour previous reply was rejected ({exc}). Reply with exactly one SELECT statement."
 
 
 def format_rows(columns: list[str], rows: list[tuple]) -> str:

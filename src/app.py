@@ -4,8 +4,8 @@
     python -m src.app                # interactive prompt
     python -m src.app --seed         # run the 5 seed questions, write docs/answer_review.md
 """
+import os
 import sys
-from datetime import date
 from pathlib import Path
 
 from src.data_layer.loader import load_to_sqlite
@@ -19,6 +19,8 @@ SEED_QUESTIONS = [
     "What's the average payment delay by vendor?",
     "Show me all pending purchase orders above ₹1,00,000.",
 ]
+# The mock data ends in Sep 2026, so "this month/week" is resolved against this fixed date, not the real clock.
+AS_OF = os.environ.get("COPILOT_TODAY", "2026-09-30")
 REVIEW_FILE = Path(__file__).resolve().parents[1] / "docs" / "answer_review.md"
 
 
@@ -57,7 +59,7 @@ def write_review(results: list[dict], today: str) -> None:
 def main(argv: list[str]) -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     conn = load_to_sqlite(verbose=False)
-    today = date.today().isoformat()
+    today = AS_OF
     if "--seed" in argv:
         results = [ask_copilot(q, conn, today) for q in SEED_QUESTIONS]
         for r in results:
