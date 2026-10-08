@@ -22,7 +22,7 @@ Replace `<yourname>` everywhere below with your first name in lowercase (example
    ```
 4. Check everything works:
    ```bash
-   python -m pytest -q          # expect: 30 passed
+   python -m pytest -q          # expect: 35 passed
    python -m src.app "Which vendors had delayed payments this month?"
    ```
    If the second command prints an answer naming two vendors, you are set up. If it says
