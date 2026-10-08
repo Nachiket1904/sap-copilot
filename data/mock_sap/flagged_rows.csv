@@ -1,0 +1,4 @@
+rule,table,key,record_id
+paid but amount missing,payments,payment_id,PMT00012
+paid but amount missing,payments,payment_id,PMT00113
+paid but amount missing,payments,payment_id,PMT00168

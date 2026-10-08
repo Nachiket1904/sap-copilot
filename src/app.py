@@ -9,7 +9,8 @@ import sys
 from pathlib import Path
 
 from src.data_layer.loader import load_to_sqlite
-from src.retrieval.anomalies import ANOMALY_SQL, is_anomaly_question
+from src.data_layer.anomaly import find_anomalies
+from src.retrieval.anomalies import is_anomaly_question
 from src.retrieval.text_to_sql import format_rows, generate_sql, phrase_answer, run_select
 
 SEED_QUESTIONS = [
@@ -28,9 +29,17 @@ def ask_copilot(question: str, conn, today: str | None = None) -> dict:
     """Route the question, run the SQL, phrase the answer. Never raises: errors come back in 'error'."""
     result = {"question": question, "sql": None, "columns": [], "rows": [], "answer": None, "error": None}
     try:
-        result["sql"] = ANOMALY_SQL if is_anomaly_question(question) else generate_sql(question, conn, today)
-        result["columns"], result["rows"] = run_select(conn, result["sql"])
-        result["answer"] = phrase_answer(question, result["sql"], result["columns"], result["rows"])
+        if is_anomaly_question(question):
+            found = find_anomalies(conn)  # deterministic pandas rules, no LLM-written SQL
+            result["sql"] = "-- deterministic rules in src/data_layer/anomaly.py (no SQL)"
+            result["columns"], result["rows"] = list(found.columns), list(found.itertuples(index=False, name=None))
+        else:
+            result["sql"] = generate_sql(question, conn, today)
+            result["columns"], result["rows"] = run_select(conn, result["sql"])
+        asked = question
+        if is_anomaly_question(question):
+            asked += "\n(Note for the answer: the rules scan ALL records, not just one week. Say so, and do not claim these happened this week.)"
+        result["answer"] = phrase_answer(asked, result["sql"], result["columns"], result["rows"])
     except Exception as exc:
         result["error"] = f"{type(exc).__name__}: {exc}"
     return result

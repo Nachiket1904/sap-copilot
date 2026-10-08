@@ -80,9 +80,45 @@ def run_quality_checks(conn: sqlite3.Connection) -> list[str]:
     return problems
 
 
+FLAGGED_ROWS_CSV = DATA_DIR / "flagged_rows.csv"
+
+# (rule name, table, key column, SQL returning the keys of offending rows)
+VALIDATION_RULES = [
+    ("negative amount", "purchase_orders", "po_id", "SELECT po_id FROM purchase_orders WHERE amount < 0"),
+    ("negative amount", "payments", "payment_id", "SELECT payment_id FROM payments WHERE amount < 0"),
+    ("missing vendor_id", "purchase_orders", "po_id",
+     "SELECT po_id FROM purchase_orders WHERE vendor_id IS NULL OR TRIM(vendor_id) = ''"),
+    ("missing vendor_id", "payments", "payment_id",
+     "SELECT payment_id FROM payments WHERE vendor_id IS NULL OR TRIM(vendor_id) = ''"),
+    ("payment date before PO date", "payments", "payment_id",
+     "SELECT p.payment_id FROM payments p JOIN purchase_orders o ON o.po_id = p.po_id "
+     "WHERE p.payment_date < o.po_date"),
+    ("paid but amount missing", "payments", "payment_id",
+     "SELECT payment_id FROM payments WHERE status = 'Paid' AND amount IS NULL"),
+    ("vendor_id not in vendor master", "purchase_orders", "po_id",
+     "SELECT o.po_id FROM purchase_orders o LEFT JOIN vendors v ON v.vendor_id = o.vendor_id "
+     "WHERE o.vendor_id IS NOT NULL AND v.vendor_id IS NULL"),
+]
+
+
+def flag_bad_rows(conn: sqlite3.Connection, out_path: Path | None = FLAGGED_ROWS_CSV) -> pd.DataFrame:
+    """Flag (never drop) suspicious rows. One report row per (rule, record); written to CSV if out_path."""
+    found = []
+    for rule, table, key, sql in VALIDATION_RULES:
+        for (record_id,) in conn.execute(sql).fetchall():
+            found.append({"rule": rule, "table": table, "key": key, "record_id": record_id})
+    report = pd.DataFrame(found, columns=["rule", "table", "key", "record_id"])
+    if out_path is not None:
+        report.to_csv(out_path, index=False)
+    return report
+
+
 if __name__ == "__main__":
     connection = load_to_sqlite()
     issues = run_quality_checks(connection)
     if issues:
         raise SystemExit("Data quality problems:\n  " + "\n  ".join(issues))
     print("Data quality checks passed.")
+    flagged = flag_bad_rows(connection)
+    print(f"\nFlagged rows ({len(flagged)}), written to {FLAGGED_ROWS_CSV}:")
+    print(flagged.to_string(index=False) if len(flagged) else "  none")

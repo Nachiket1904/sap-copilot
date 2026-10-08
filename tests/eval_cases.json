@@ -1,0 +1,51 @@
+[
+  {
+    "id": "q1_delayed_vendors_this_month",
+    "question": "Which vendors had delayed payments this month?",
+    "must_contain": ["Quantum Circuit Traders", "Summit Consulting Services"],
+    "must_not_contain": ["Northgate Stationery", "Lakeside Chemicals", "Junction Freight"],
+    "note": "As-of 2026-09-30. Delayed = payment_date > due_date, payment_date in Sep 2026: V017 and V019 only."
+  },
+  {
+    "id": "q2_q3_pos_by_category",
+    "question": "Summarize Q3 purchase orders by category.",
+    "must_contain": ["2232098.64", "104760.02", "1223087.51", "595536.31", "448391.71", "896136.52", "Uncategorized"],
+    "must_not_contain": ["1047600.02"],
+    "note": "Q3 = Jul-Sep 2026. Packaging average is 104,760.02 (earlier bug: 1,047,600.02). Numbers compared with commas removed."
+  },
+  {
+    "id": "q3_unusual_transactions",
+    "question": "Flag any transactions that look unusual this week.",
+    "must_contain": ["PO00148", "PO00020", "PO00081", "PO00221", "PO00222", "PMT00028", "PMT00093", "PMT00102", "PMT00103", "PMT00112", "PMT00151"],
+    "must_not_contain": [],
+    "note": "3 amount outliers + 2 duplicate POs + 6 delay outliers (delay > mean + 2 std = 24.6 days). Rules scan all records."
+  },
+  {
+    "id": "q4_avg_delay_by_vendor",
+    "question": "What's the average payment delay by vendor?",
+    "must_contain": ["Bluewave Logistics", "Cedar Point Supplies", "Junction Freight Services", "Keystone Manufacturing", "Lakeside Chemicals", "Northgate Stationery", "Pinnacle MRO Supply", "Quantum Circuit Traders", "Summit Consulting Services", "19.33", "18.5"],
+    "must_not_contain": [],
+    "note": "Averaged over delayed payments only (9 vendors)."
+  },
+  {
+    "id": "q5_pending_above_1_lakh",
+    "question": "Show me all pending purchase orders above ₹1,00,000.",
+    "must_contain": ["PO00013", "PO00031", "PO00032", "PO00051", "PO00057", "PO00059", "PO00091", "PO00104", "PO00123", "PO00131", "PO00136", "PO00151", "PO00178"],
+    "must_not_contain": ["delivery delay"],
+    "note": "13 POs, status Pending and amount > 100000."
+  },
+  {
+    "id": "q6_multipart_delay_and_amount",
+    "question": "Which vendors had delayed payments and by how much?",
+    "must_contain": ["Quantum Circuit Traders", "Summit Consulting Services", "Lakeside Chemicals", "Junction Freight Services", "35", "33", "32"],
+    "must_not_contain": [],
+    "note": "Day 4 multi-part question: vendor AND delay days, over all delayed payments (16 payments, 9 vendors)."
+  },
+  {
+    "id": "q7_compare_months",
+    "question": "Compare this month's purchase orders to last month's.",
+    "must_contain": ["36", "19", "2811804.49", "2524057.69"],
+    "must_not_contain": [],
+    "note": "Day 4 multi-part question: Aug 2026 = 36 POs / 2,811,804.49; Sep 2026 = 19 POs / 2,524,057.69 (as-of 2026-09-30)."
+  }
+]

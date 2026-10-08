@@ -70,6 +70,28 @@ On current mock data this flags exactly the seeded cases: 3 outliers
 succeed, tests pass. Known item: `google-generativeai` is deprecated in favour
 of Google's `google-genai` SDK. It still works; migrate in Week 2 if Gemini is used.
 
+## Decision 4 — Week 3 anomaly rules (`src/data_layer/anomaly.py`)
+
+Q3 ("unusual transactions") now runs three deterministic pandas rules, independent of the LLM:
+
+| Rule | Definition | Flags on current data |
+|---|---|---|
+| Payment delay outlier | `delay_days = payment_date - due_date`; flag if delay > mean + **2 × stddev** of all paid payments (mean -10.8, stddev 17.7, threshold 24.6 days) | 6 payments (PMT00028, 93, 102, 103, 112, 151) |
+| Amount outlier | PO amount > category mean + 2 × stddev (Decision 2) | PO00148, PO00020, PO00081 |
+| Possible duplicate | same vendor + amount + po_date (Decision 2) | PO00221, PO00222 |
+
+Why the delay mean is **overall, not per vendor**: most vendors have only 1–2 payments, so a per-vendor mean
+and stddev are meaningless. Revisit when there is more data per vendor.
+
+Why 2σ: 1.5σ would flag 13 payments (too noisy for a review queue), 2σ flags 6, which a person can review.
+
+Known limit: "this week" is not applied. The rules scan all records and the answer says so, because the mock data
+has no recent anomalies to show in a one-week window. Adding a date filter is a Week 4 option.
+
+Data validation (`flag_bad_rows` in `loader.py`) flags, never drops: negative amounts, missing vendor IDs,
+payment date before PO date, Paid payments with no amount, POs whose vendor is not in the vendor master.
+The report is written to `data/mock_sap/flagged_rows.csv`.
+
 ## Prompt rules the LLM must be given (Week 2 input)
 
 - Today's date, so "this month" / "this week" resolve correctly (data ends 2026-09-20).
