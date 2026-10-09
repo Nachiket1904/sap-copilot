@@ -27,13 +27,15 @@ REVIEW_FILE = Path(__file__).resolve().parents[1] / "docs" / "answer_review.md"
 
 def ask_copilot(question: str, conn, today: str | None = None) -> dict:
     """Route the question, run the SQL, phrase the answer. Never raises: errors come back in 'error'."""
-    result = {"question": question, "sql": None, "columns": [], "rows": [], "answer": None, "error": None}
+    result = {"question": question, "sql": None, "columns": [], "rows": [], "answer": None, "error": None, "route": None}
     try:
         if is_anomaly_question(question):
+            result["route"] = "anomaly"
             found = find_anomalies(conn)  # deterministic pandas rules, no LLM-written SQL
             result["sql"] = "-- deterministic rules in src/data_layer/anomaly.py (no SQL)"
             result["columns"], result["rows"] = list(found.columns), list(found.itertuples(index=False, name=None))
         else:
+            result["route"] = "sql"
             result["sql"] = generate_sql(question, conn, today)
             result["columns"], result["rows"] = run_select(conn, result["sql"])
         asked = question
