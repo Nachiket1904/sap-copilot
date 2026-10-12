@@ -92,6 +92,12 @@ Data validation (`flag_bad_rows` in `loader.py`) flags, never drops: negative am
 payment date before PO date, Paid payments with no amount, POs whose vendor is not in the vendor master.
 The report is written to `data/mock_sap/flagged_rows.csv`.
 
+## Decisions on ambiguous columns (Week 2 Day 4)
+
+- **Scheduled payments are not delayed.** All 5 have no `payment_date` and a `due_date` after the as-of date (2026-10-12 to 2026-11-26), so none is overdue. A delay is only measured on payments that have a `payment_date`.
+- **`delivery_date` on Pending POs is a scheduled date.** 41 of 43 Pending POs have a delivery date before the as-of date, so treating it as "late" would flag nearly all of them. It is not proof of arrival or lateness.
+- **"Category" means `purchase_orders.category`, never `vendors.vendor_category`.** (Already in the SQL prompt.)
+
 ## Prompt rules the LLM must be given (Week 2 input)
 
 - Today's date, so "this month" / "this week" resolve correctly (data ends 2026-09-20).

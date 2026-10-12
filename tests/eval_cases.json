@@ -47,5 +47,26 @@
     "must_contain": ["36", "19", "2811804.49", "2524057.69"],
     "must_not_contain": [],
     "note": "Day 4 multi-part question: Aug 2026 = 36 POs / 2,811,804.49; Sep 2026 = 19 POs / 2,524,057.69 (as-of 2026-09-30)."
+  },
+  {
+    "id": "q8_rejected_count",
+    "question": "How many Rejected purchase orders are there?",
+    "must_contain": ["13"],
+    "must_not_contain": [],
+    "note": "status = 'Rejected': 13 POs."
+  },
+  {
+    "id": "q9_paid_no_amount",
+    "question": "Which paid payments have no amount recorded?",
+    "must_contain": ["PMT00012", "PMT00113", "PMT00168"],
+    "must_not_contain": [],
+    "note": "Paid with NULL amount: PMT00012, PMT00113, and PMT00168 (the 'TBD' amount, loaded as NULL)."
+  },
+  {
+    "id": "q10_closed_total",
+    "question": "What is the total value of Closed purchase orders?",
+    "must_contain": ["3112077.6"],
+    "must_not_contain": [],
+    "note": "SUM(amount) where status = 'Closed'."
   }
 ]

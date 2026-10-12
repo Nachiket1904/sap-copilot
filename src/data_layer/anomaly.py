@@ -12,7 +12,7 @@ import pandas as pd
 K_DELAY = 2.0
 K_AMOUNT = 2.0
 
-COLUMNS = ["rule", "record_id", "vendor_id", "vendor_name", "value", "detail"]
+COLUMNS = ["rule", "record_id", "vendor_id", "vendor_name", "value", "unit", "detail"]
 
 
 def _empty() -> pd.DataFrame:
@@ -33,6 +33,7 @@ def delay_anomalies(payments: pd.DataFrame, vendors: pd.DataFrame, k: float = K_
         "vendor_id": flagged["vendor_id"],
         "vendor_name": flagged["vendor_name"],
         "value": flagged["delay_days"].astype(float),
+        "unit": "days late",
         "detail": [f"paid {int(d)} days after due date (mean {mean:.1f}, flag above {mean + k * std:.1f})"
                    for d in flagged["delay_days"]],
     })[COLUMNS]
@@ -50,6 +51,7 @@ def amount_anomalies(pos: pd.DataFrame, vendors: pd.DataFrame, k: float = K_AMOU
         "vendor_id": flagged["vendor_id"],
         "vendor_name": flagged["vendor_name"],
         "value": flagged["amount"].astype(float),
+        "unit": "INR",
         "detail": [f"{r.category}: {r.amount:,.2f} vs category mean {r.mean:,.2f}" for r in flagged.itertuples()],
     })[COLUMNS]
 
@@ -67,6 +69,7 @@ def duplicate_anomalies(pos: pd.DataFrame, vendors: pd.DataFrame) -> pd.DataFram
         "vendor_id": dup["vendor_id"],
         "vendor_name": dup["vendor_name"],
         "value": dup["amount"].astype(float),
+        "unit": "INR",
         "detail": [f"same vendor, amount and date as {o}" for o in dup["original"]],
     })[COLUMNS]
 
