@@ -22,6 +22,13 @@ def test_health():
     assert body["status"] == "ok" and body["as_of"]
 
 
+def test_home_serves_copilot_ui():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "SAP Copilot" in response.text
+
+
 def test_examples_lists_seed_questions():
     assert len(client.get("/examples").json()["questions"]) == 5
 

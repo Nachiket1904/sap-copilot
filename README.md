@@ -70,6 +70,12 @@ python -m src.retrieval.text_to_sql "Which vendors had delayed payments this mon
 
 Tests stub the LLM, so `pytest` needs no API key. Run the copilot with `python -m src.app "your question"`, or `--seed` for the 5 seed questions.
 
+To use the browser UI, start the API and open `http://127.0.0.1:8000/`:
+
+```bash
+uvicorn src.api:app --reload
+```
+
 ## Collaborators
 
 - AI Engineer — LLM integration, prompt design, query/retrieval layer, overall AI architecture

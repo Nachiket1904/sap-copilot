@@ -10,9 +10,11 @@ Endpoints:
 """
 import math
 from datetime import date, datetime
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from src.app import AS_OF, SEED_QUESTIONS, ask_copilot
@@ -21,9 +23,15 @@ from src.data_layer.loader import flag_bad_rows, load_to_sqlite
 
 MAX_QUESTION_CHARS = 500
 MAX_ROWS_RETURNED = 500
+UI_FILE = Path(__file__).resolve().parent / "static" / "index.html"
 
 app = FastAPI(title="SAP Copilot API", version="0.2.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"], allow_headers=["*"])
+
+
+@app.get("/", include_in_schema=False)
+def home():
+    return FileResponse(UI_FILE)
 
 
 def get_conn():

@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f8fb">
+  <title>SAP Copilot</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #1b2637;
+      background: #f6f8fb;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --ink: #1b2637;
+      --muted: #68758a;
+      --line: #e1e7ef;
+      --paper: #fff;
+      --blue: #1769aa;
+      --blue-dark: #10558d;
+      --blue-soft: #eaf3fb;
+      --amber: #8a5a00;
+      --amber-soft: #fff6df;
+      --red: #a83232;
+      --red-soft: #fff0ef;
+      --shadow: 0 8px 30px rgb(31 50 75 / 6%);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 3px solid #77b7ed;
+      outline-offset: 2px;
+    }
+    .topbar {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px clamp(18px, 4vw, 56px);
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 38px; height: 38px; display: grid; place-items: center;
+      border-radius: 12px; color: white; background: var(--blue); font-weight: 800;
+    }
+    h1 { margin: 0; font-size: 19px; letter-spacing: -.02em; }
+    .subtitle { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .as-of {
+      color: #43536a; background: #f3f6fa; border: 1px solid var(--line);
+      border-radius: 999px; padding: 8px 12px; font-size: 12px; white-space: nowrap;
+    }
+    .banner {
+      display: none; align-items: center; justify-content: space-between; gap: 14px;
+      margin: 18px auto 0; width: min(1440px, calc(100% - 36px));
+      padding: 12px 14px; border: 1px solid #f1c4bf; border-radius: 10px;
+      background: var(--red-soft); color: var(--red); font-size: 14px;
+    }
+    .banner.visible { display: flex; }
+    .banner button, .text-button {
+      border: 0; background: transparent; color: inherit; font-weight: 700; text-decoration: underline;
+    }
+    main {
+      width: min(1440px, calc(100% - 36px)); margin: 28px auto 60px;
+      display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(300px, .85fr);
+      align-items: start; gap: 22px;
+    }
+    .primary, .sidebar { min-width: 0; display: grid; gap: 18px; }
+    .card {
+      background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+    .ask-card { padding: clamp(18px, 3vw, 28px); }
+    .eyebrow { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+    .ask-heading { margin: 7px 0 18px; font-size: 23px; letter-spacing: -.035em; }
+    .question-row { display: flex; gap: 10px; align-items: stretch; }
+    #question {
+      width: 100%; min-width: 0; min-height: 48px; padding: 12px 14px;
+      color: var(--ink); border: 1px solid #cbd5e1; border-radius: 9px; background: #fff;
+    }
+    #question::placeholder { color: #8793a4; }
+    .primary-button {
+      border: 0; border-radius: 9px; padding: 0 21px; color: white; font-weight: 700;
+      background: var(--blue); min-width: 88px; transition: background .15s ease;
+    }
+    .primary-button:hover:not(:disabled) { background: var(--blue-dark); }
+    .primary-button:disabled { opacity: .62; cursor: wait; }
+    .input-meta { display: flex; justify-content: space-between; gap: 10px; min-height: 24px; margin-top: 5px; }
+    #input-error { color: var(--red); font-size: 13px; }
+    #char-count { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .examples { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .examples-label { flex-basis: 100%; color: var(--muted); font-size: 12px; margin-bottom: 1px; }
+    .chip {
+      border: 1px solid #d7e2ed; border-radius: 999px; padding: 7px 11px;
+      color: #31526e; background: #f7fafc; font-size: 12px; text-align: left;
+    }
+    .chip:hover { border-color: #9fc5e5; color: var(--blue-dark); background: var(--blue-soft); }
+    .result-card { padding: clamp(18px, 3vw, 28px); }
+    .result-card[hidden] { display: none; }
+    .section-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .section-title { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: .02em; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;
+      padding: 6px 10px; font-size: 11px; font-weight: 800; letter-spacing: .04em;
+      text-transform: uppercase; color: #24577e; background: var(--blue-soft);
+    }
+    .badge.rules { color: var(--amber); background: var(--amber-soft); }
+    #answer { line-height: 1.65; font-size: 15px; overflow-wrap: anywhere; margin: 19px 0 15px; }
+    #answer p { margin: 0 0 12px; }
+    #answer p:last-child { margin-bottom: 0; }
+    #answer ul, #answer ol { padding-left: 23px; }
+    #answer table { border-collapse: collapse; display: block; max-width: 100%; overflow-x: auto; font-size: 13px; }
+    #answer th, #answer td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; }
+    #answer th { background: #f5f8fb; }
+    #answer code { background: #f0f3f7; padding: 2px 4px; border-radius: 4px; }
+    .route-note { display: none; color: var(--amber); font-size: 13px; margin: -5px 0 16px; }
+    .route-note.visible { display: block; }
+    .error-state {
+      display: none; border: 1px solid #f1c4bf; border-radius: 9px;
+      padding: 14px; color: var(--red); background: var(--red-soft);
+    }
+    .error-state.visible { display: block; }
+    .error-state p { margin: 0 0 10px; }
+    .error-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .error-state details { margin-top: 10px; color: #75413d; font-size: 12px; }
+    .error-state pre {
+      max-height: 160px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+      padding: 9px; background: #fff; border-radius: 6px;
+    }
+    .evidence { border-top: 1px solid var(--line); margin-top: 20px; }
+    .evidence details { border-bottom: 1px solid var(--line); }
+    .evidence summary {
+      cursor: pointer; list-style: none; padding: 14px 0; font-size: 13px;
+      font-weight: 700; color: #34465c;
+    }
+    .evidence summary::-webkit-details-marker { display: none; }
+    .evidence summary::before { content: "▸"; display: inline-block; width: 20px; color: var(--blue); }
+    .evidence details[open] summary::before { content: "▾"; }
+    .summary-meta { color: var(--muted); font-weight: 500; margin-left: 5px; }
+    .code-wrap { position: relative; }
+    .copy-button {
+      position: absolute; right: 8px; top: 8px; border: 1px solid #536174; border-radius: 6px;
+      padding: 5px 8px; color: #eef4fa; background: #344255; font-size: 11px;
+    }
+    #sql-code {
+      margin: 0 0 13px; padding: 14px; padding-right: 76px; color: #e7edf5;
+      background: #172333; border-radius: 8px; overflow: auto; white-space: pre-wrap;
+      overflow-wrap: anywhere; font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    .table-scroll { max-height: 430px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th {
+      position: sticky; top: 0; z-index: 1; text-align: left; background: #f2f6fa;
+      color: #3e4d60; white-space: nowrap;
+    }
+    .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .data-table td { overflow-wrap: anywhere; }
+    .data-table th.numeric, .data-table td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+    .sort-button {
+      display: inline; padding: 0; border: 0; color: inherit; background: transparent;
+      font-weight: 800; text-align: inherit;
+    }
+    .data-table tbody tr:last-child td { border-bottom: 0; }
+    .empty-rows { padding: 18px; color: var(--muted); text-align: center; font-size: 13px; }
+    .subtle { color: var(--muted); font-size: 12px; margin: 9px 0 0; }
+    .panel { overflow: hidden; }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 17px 18px; border-bottom: 1px solid var(--line);
+    }
+    .panel-head h2 { margin: 0; font-size: 14px; }
+    .count { color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .watch-list { list-style: none; margin: 0; padding: 5px 16px; }
+    .watch-item { border-bottom: 1px solid #edf0f4; }
+    .watch-item:last-child { border-bottom: 0; }
+    .watch-item summary {
+      cursor: pointer; padding: 11px 2px; list-style: none; font-size: 12px; line-height: 1.5;
+    }
+    .watch-item summary::-webkit-details-marker { display: none; }
+    .watch-item summary::before { content: "⚠"; margin-right: 8px; color: #ba810e; }
+    .watch-item .item-title { color: #35465b; font-weight: 700; }
+    .watch-item .item-value { display: block; margin: 4px 0 0 20px; color: var(--amber); font-variant-numeric: tabular-nums; }
+    .watch-detail { padding: 0 8px 12px 22px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .watch-detail p { margin: 3px 0; }
+    .quality-mark { color: #27805e; font-weight: 900; }
+    .panel-message { padding: 16px 18px; color: var(--muted); font-size: 13px; }
+    .loading-indicator { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); }
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid #dce5ee; border-top-color: var(--blue);
+      border-radius: 50%; animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sidebar-heading { margin: 1px 0 -7px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+    @media (max-width: 850px) {
+      main { grid-template-columns: minmax(0, 1fr); }
+      .sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .sidebar-heading { grid-column: 1 / -1; }
+    }
+    @media (max-width: 570px) {
+      .topbar { align-items: flex-start; padding: 13px 17px; }
+      .as-of { max-width: 145px; white-space: normal; text-align: center; line-height: 1.4; }
+      main { width: calc(100% - 24px); margin-top: 14px; gap: 14px; }
+      .sidebar { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+      .sidebar-heading { grid-column: auto; }
+      .ask-heading { font-size: 20px; }
+      .question-row { flex-direction: column; }
+      .primary-button { min-height: 46px; }
+      .section-top { align-items: flex-start; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">S</div>
+      <div><h1>SAP Copilot</h1><div class="subtitle">Answers for your procurement data</div></div>
+    </div>
+    <div id="as-of" class="as-of" aria-live="polite">Connecting to data…</div>
+  </header>
+
+  <div id="connection-banner" class="banner" role="alert">
+    <span>Can’t reach the copilot service. Check that the server is running, then try again.</span>
+    <button type="button" id="reload-button">Retry</button>
+  </div>
+
+  <main>
+    <section class="primary" aria-label="Ask the copilot">
+      <form id="ask-form" class="card ask-card">
+        <div class="eyebrow">ASK</div>
+        <h2 class="ask-heading">What would you like to know?</h2>
+        <div class="question-row">
+          <input id="question" name="question" type="text" maxlength="500" minlength="3"
+                 placeholder="Ask about purchase orders, vendors, or payments…" autocomplete="off"
+                 aria-describedby="input-error char-count">
+          <button id="ask-button" class="primary-button" type="submit">Ask</button>
+        </div>
+        <div class="input-meta">
+          <span id="input-error" role="status"></span>
+          <span id="char-count">0 / 500</span>
+        </div>
+        <div id="examples" class="examples" aria-label="Example questions">
+          <span class="examples-label">Try an example</span>
+          <span class="subtle">Loading examples…</span>
+        </div>
+      </form>
+
+      <section id="result-card" class="card result-card" aria-live="polite" hidden>
+        <div id="loading-state" hidden>
+          <div class="section-top">
+            <h2 class="section-title">ANSWER</h2>
+            <span class="loading-indicator"><span class="spinner" aria-hidden="true"></span>Thinking…</span>
+          </div>
+          <p class="subtle">Checking your data. This can take a few seconds.</p>
+        </div>
+        <div id="answer-state" hidden>
+          <div class="section-top">
+            <h2 class="section-title">ANSWER</h2>
+            <span id="route-badge" class="badge"></span>
+          </div>
+          <div id="answer"></div>
+          <p id="route-note" class="route-note">These fixed rules scan all records, not only this week.</p>
+          <div class="evidence">
+            <details id="sql-details">
+              <summary id="sql-summary">Show SQL</summary>
+              <div class="code-wrap">
+                <button id="copy-sql" type="button" class="copy-button">Copy</button>
+                <pre id="sql-code"></pre>
+              </div>
+            </details>
+            <details id="data-details">
+              <summary id="data-summary">Show data</summary>
+              <div id="data-content"></div>
+            </details>
+          </div>
+        </div>
+        <div id="error-state" class="error-state" role="alert" hidden>
+          <p id="friendly-error"></p>
+          <div class="error-actions">
+            <button id="retry-question" type="button" class="text-button">Retry</button>
+            <details>
+              <summary>Details</summary>
+              <pre id="error-detail"></pre>
+            </details>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <aside class="sidebar" aria-label="Data watchlists">
+      <h2 class="sidebar-heading">WATCHLIST</h2>
+      <section class="card panel" aria-labelledby="anomaly-heading">
+        <div class="panel-head">
+          <h2 id="anomaly-heading"><span aria-hidden="true">⚠</span> Anomalies</h2>
+          <span id="anomaly-count" class="count">Loading…</span>
+        </div>
+        <div id="anomaly-content" class="panel-message">Loading flagged records…</div>
+      </section>
+      <section class="card panel" aria-labelledby="quality-heading">
+        <div class="panel-head">
+          <h2 id="quality-heading"><span class="quality-mark" aria-hidden="true">✓</span> Data quality</h2>
+          <span id="quality-count" class="count">Loading…</span>
+        </div>
+        <div id="quality-content" class="panel-message">Loading validation results…</div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const $ = (selector) => document.querySelector(selector);
+    const questionInput = $("#question");
+    const form = $("#ask-form");
+    const askButton = $("#ask-button");
+    const resultCard = $("#result-card");
+    let lastQuestion = "";
+    let isSubmitting = false;
+    let currentSql = "";
+    let resultRows = [];
+    let resultColumns = [];
+    const sortState = { column: -1, direction: 1 };
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[char]);
+    }
+
+    function inlineMarkdown(value) {
+      let text = escapeHtml(value);
+      text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+      text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+      return text;
+    }
+
+    function renderMarkdown(markdown) {
+      const lines = String(markdown || "").split(/\r?\n/);
+      const blocks = [];
+      let paragraph = [];
+      let listType = "";
+      let listItems = [];
+      let tableRows = [];
+      const flushParagraph = () => {
+        if (paragraph.length) blocks.push(`<p>${paragraph.map(inlineMarkdown).join("<br>")}</p>`);
+        paragraph = [];
+      };
+      const flushList = () => {
+        if (listItems.length) {
+          blocks.push(`<${listType}>${listItems.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</${listType}>`);
+        }
+        listItems = [];
+        listType = "";
+      };
+      const flushTable = () => {
+        if (tableRows.length) {
+          const rows = tableRows.map((row) => row.split("|").slice(1, -1).map((cell) => cell.trim()));
+          const header = rows.shift() || [];
+          const bodyRows = rows.filter((row) => !row.every((cell) => /^:?-{3,}:?$/.test(cell)));
+          blocks.push(`<table><thead><tr>${header.map((cell) => `<th>${inlineMarkdown(cell)}</th>`).join("")}</tr></thead><tbody>${bodyRows.map((row) => `<tr>${row.map((cell) => `<td>${inlineMarkdown(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table>`);
+        }
+        tableRows = [];
+      };
+
+      for (const line of lines) {
+        if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+          flushParagraph();
+          flushList();
+          tableRows.push(line.trim());
+          continue;
+        }
+        flushTable();
+        const listMatch = line.match(/^\s*([-*]|\d+\.)\s+(.+)$/);
+        if (listMatch) {
+          flushParagraph();
+          const nextType = /^\d/.test(listMatch[1]) ? "ol" : "ul";
+          if (listType && listType !== nextType) flushList();
+          listType = nextType;
+          listItems.push(listMatch[2]);
+        } else {
+          flushList();
+          if (!line.trim()) flushParagraph();
+          else paragraph.push(line.trim());
+        }
+      }
+      flushTable();
+      flushList();
+      flushParagraph();
+      return blocks.join("") || "<p></p>";
+    }
+
+    function showBanner(show) {
+      $("#connection-banner").classList.toggle("visible", show);
+    }
+
+    function showInputError(message = "") {
+      $("#input-error").textContent = message;
+    }
+
+    function updateCounter() {
+      $("#char-count").textContent = `${questionInput.value.length} / 500`;
+    }
+
+    function formatDate(dateValue) {
+      const parsed = new Date(`${dateValue}T00:00:00`);
+      return Number.isNaN(parsed.valueOf())
+        ? dateValue
+        : new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(parsed);
+    }
+
+    async function getJson(url) {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Request failed (${response.status})`);
+      return response.json();
+    }
+
+    function formatINR(value) {
+      return `₹${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(Number(value))}`;
+    }
+
+    function formatAnomalyValue(item) {
+      if (item.value === null || item.value === undefined) return "—";
+      return item.unit === "INR"
+        ? formatINR(item.value)
+        : `${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 }).format(Number(item.value))} ${item.unit || ""}`.trim();
+    }
+
+    function anomalyListItem(item) {
+      const title = [item.record_id, item.vendor_name].filter(Boolean).join(" · ") || item.rule || "Flagged record";
+      return `<li><details class="watch-item">
+        <summary><span class="item-title">${escapeHtml(title)}</span><span class="item-value">${escapeHtml(formatAnomalyValue(item))}</span></summary>
+        <div class="watch-detail">
+          <p><strong>Rule:</strong> ${escapeHtml(item.rule || "—")}</p>
+          <p><strong>Record:</strong> ${escapeHtml(item.record_id || "—")}</p>
+          <p><strong>Vendor:</strong> ${escapeHtml(item.vendor_name || item.vendor_id || "—")}</p>
+          <p><strong>Reason:</strong> ${escapeHtml(item.detail || "—")}</p>
+          <p><strong>Value:</strong> ${escapeHtml(formatAnomalyValue(item))}</p>
+        </div>
+      </details></li>`;
+    }
+
+    async function loadAnomalies() {
+      const content = $("#anomaly-content");
+      try {
+        const data = await getJson("/anomalies");
+        $("#anomaly-count").textContent = String(data.count);
+        if (!data.items.length) {
+          content.className = "panel-message";
+          content.textContent = "No anomalies flagged.";
+          return;
+        }
+        const initial = data.items.slice(0, 4);
+        content.className = "";
+        content.innerHTML = `<ul class="watch-list">${initial.map(anomalyListItem).join("")}</ul>
+          <details class="all-items">
+            <summary class="text-button" style="margin: 0 18px 14px">View all ${data.count}</summary>
+            <ul class="watch-list">${data.items.map(anomalyListItem).join("")}</ul>
+          </details>`;
+      } catch (error) {
+        $("#anomaly-count").textContent = "Unavailable";
+        content.className = "panel-message";
+        content.textContent = "Could not load anomalies.";
+      }
+    }
+
+    async function loadQuality() {
+      const content = $("#quality-content");
+      try {
+        const data = await getJson("/data-quality");
+        $("#quality-count").textContent = String(data.count);
+        if (!data.items.length) {
+          content.className = "panel-message";
+          content.textContent = "No data quality issues found.";
+          return;
+        }
+        const item = (row) => `<li><details class="watch-item">
+          <summary><span class="item-title">${escapeHtml(row.record_id || "Unknown record")}</span>
+            <span class="item-value">${escapeHtml(row.rule || "Flagged row")}</span></summary>
+          <div class="watch-detail">
+            <p><strong>Issue:</strong> ${escapeHtml(row.rule || "—")}</p>
+            <p><strong>Record:</strong> ${escapeHtml(row.record_id || "—")}</p>
+            <p><strong>Table:</strong> ${escapeHtml(row.table || "—")}</p>
+          </div>
+        </details></li>`;
+        const first = data.items.slice(0, 3);
+        content.className = "";
+        content.innerHTML = `<ul class="watch-list">${first.map(item).join("")}</ul>
+          ${data.items.length > 3 ? `<details class="all-items"><summary class="text-button" style="margin: 0 18px 14px">View all ${data.count}</summary><ul class="watch-list">${data.items.map(item).join("")}</ul></details>` : ""}`;
+      } catch (error) {
+        $("#quality-count").textContent = "Unavailable";
+        content.className = "panel-message";
+        content.textContent = "Could not load data quality results.";
+      }
+    }
+
+    function showFormError(error, detail = "") {
+      $("#loading-state").hidden = true;
+      $("#answer-state").hidden = true;
+      $("#error-state").hidden = false;
+      $("#error-state").classList.add("visible");
+      $("#friendly-error").textContent = error;
+      $("#error-detail").textContent = detail || error;
+      $("#retry-question").hidden = !lastQuestion;
+      resultCard.hidden = false;
+    }
+
+    function showLoading() {
+      resultCard.hidden = false;
+      $("#loading-state").hidden = false;
+      $("#answer-state").hidden = true;
+      $("#error-state").hidden = true;
+      $("#error-state").classList.remove("visible");
+      askButton.disabled = true;
+      askButton.textContent = "Asking…";
+      showInputError("");
+    }
+
+    function shouldFormatAsMoney(column) {
+      return /(^|_)(amount|price|cost|total|value|spend|budget)(_|$)/i.test(column);
+    }
+
+    function shouldAlignRight(value) {
+      return typeof value === "number" || (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value)));
+    }
+
+    function formatCell(value, column) {
+      if (value === null || value === undefined || value === "") return '<span class="subtle">—</span>';
+      if (shouldFormatAsMoney(column) && Number.isFinite(Number(value))) return escapeHtml(formatINR(value));
+      if (typeof value === "number") return escapeHtml(new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(value));
+      return escapeHtml(value);
+    }
+
+    function renderDataTable() {
+      const content = $("#data-content");
+      if (!resultRows.length) {
+        content.innerHTML = '<div class="empty-rows">Nothing matched this question.</div>';
+        return;
+      }
+      const sortedRows = [...resultRows];
+      if (sortState.column >= 0) {
+        const index = sortState.column;
+        const direction = sortState.direction;
+        sortedRows.sort((left, right) => {
+          const a = left[index];
+          const b = right[index];
+          if (a === null || a === undefined) return b === null || b === undefined ? 0 : 1;
+          if (b === null || b === undefined) return -1;
+          const an = Number(a), bn = Number(b);
+          const comparison = Number.isFinite(an) && Number.isFinite(bn)
+            ? an - bn
+            : String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+          return comparison * direction;
+        });
+      }
+      const headers = resultColumns.map((column, index) => {
+        const numeric = resultRows.some((row) => shouldAlignRight(row[index]));
+        const arrow = sortState.column === index ? (sortState.direction > 0 ? " ▲" : " ▼") : "";
+        return `<th class="${numeric ? "numeric" : ""}" scope="col"><button class="sort-button" type="button" data-sort="${index}" aria-label="Sort by ${escapeHtml(column)}">${escapeHtml(column)}${arrow}</button></th>`;
+      }).join("");
+      const body = sortedRows.map((row) => `<tr>${resultColumns.map((column, index) =>
+        `<td class="${shouldAlignRight(row[index]) ? "numeric" : ""}">${formatCell(row[index], column)}</td>`
+      ).join("")}</tr>`).join("");
+      content.innerHTML = `<div class="table-scroll" role="region" aria-label="Answer data" tabindex="0">
+        <table class="data-table"><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table></div>
+        ${resultRows.length > 20 ? '<p class="subtle">Tip: select a column heading to sort the results.</p>' : ""}`;
+      content.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => {
+        const column = Number(button.dataset.sort);
+        sortState.direction = sortState.column === column ? -sortState.direction : 1;
+        sortState.column = column;
+        renderDataTable();
+      }));
+    }
+
+    function displayResult(data) {
+      $("#loading-state").hidden = true;
+      $("#error-state").hidden = true;
+      $("#error-state").classList.remove("visible");
+      $("#answer-state").hidden = false;
+      $("#route-badge").textContent = data.route === "anomaly" ? "Rules" : "SQL";
+      $("#route-badge").classList.toggle("rules", data.route === "anomaly");
+      $("#answer").innerHTML = renderMarkdown(data.answer);
+      $("#route-note").classList.toggle("visible", data.route === "anomaly");
+      currentSql = data.sql || "";
+      const isRules = data.route === "anomaly";
+      $("#sql-summary").textContent = isRules ? "How the rules work" : "Show SQL";
+      $("#sql-code").textContent = isRules ? "Fixed anomaly rules; no SQL query was generated." : currentSql;
+      $("#copy-sql").hidden = isRules;
+      resultColumns = data.columns || [];
+      resultRows = data.rows || [];
+      sortState.column = -1;
+      sortState.direction = 1;
+      const countText = data.truncated
+        ? `Showing first ${resultRows.length} of ${data.row_count} rows`
+        : `${data.row_count} ${data.row_count === 1 ? "row" : "rows"}`;
+      $("#data-summary").innerHTML = `Show data <span class="summary-meta">(${countText})</span>`;
+      renderDataTable();
+      $("#data-details").open = data.row_count <= 20;
+      $("#sql-details").open = false;
+    }
+
+    async function submitQuestion(question) {
+      if (isSubmitting) return;
+      const trimmed = question.trim();
+      if (trimmed.length < 3) {
+        showInputError("Enter a question with at least 3 characters.");
+        questionInput.focus();
+        return;
+      }
+      if (trimmed.length > 500) {
+        showInputError("Questions can be up to 500 characters.");
+        questionInput.focus();
+        return;
+      }
+      lastQuestion = trimmed;
+      isSubmitting = true;
+      showLoading();
+      try {
+        const response = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: trimmed })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          const detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+          if (response.status === 422) {
+            resultCard.hidden = true;
+            showInputError("Please enter a question between 3 and 500 characters.");
+            return;
+          }
+          showFormError("Couldn’t answer that. Try rephrasing your question.", detail);
+          return;
+        }
+        showBanner(false);
+        displayResult(data);
+      } catch (error) {
+        showFormError("Can’t reach the copilot service. Check your connection and try again.", error.message);
+        showBanner(true);
+      } finally {
+        isSubmitting = false;
+        askButton.disabled = false;
+        askButton.textContent = "Ask";
+      }
+    }
+
+    async function initialize() {
+      questionInput.focus();
+      try {
+        const [health, examples] = await Promise.all([getJson("/health"), getJson("/examples")]);
+        $("#as-of").textContent = `Data as of ${formatDate(health.as_of)}`;
+        const examplesNode = $("#examples");
+        examplesNode.innerHTML = '<span class="examples-label">Try an example</span>';
+        examples.questions.forEach((question) => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "chip";
+          chip.textContent = question;
+          chip.addEventListener("click", () => {
+            questionInput.value = question;
+            updateCounter();
+            submitQuestion(question);
+          });
+          examplesNode.append(chip);
+        });
+        showBanner(false);
+      } catch (error) {
+        $("#as-of").textContent = "Data unavailable";
+        showBanner(true);
+      }
+      await Promise.all([loadAnomalies(), loadQuality()]);
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitQuestion(questionInput.value);
+    });
+    questionInput.addEventListener("input", () => {
+      updateCounter();
+      if ($("#input-error").textContent) showInputError("");
+    });
+    $("#retry-question").addEventListener("click", () => submitQuestion(lastQuestion));
+    $("#reload-button").addEventListener("click", initialize);
+    $("#copy-sql").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(currentSql);
+        $("#copy-sql").textContent = "Copied";
+        window.setTimeout(() => { $("#copy-sql").textContent = "Copy"; }, 1400);
+      } catch (error) {
+        $("#copy-sql").textContent = "Copy failed";
+      }
+    });
+    questionInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    updateCounter();
+    initialize();
+  </script>
+</body>
+</html>
